@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Palette
+     Areia          #D3C7AD
+     Verde Opaco    #6B6751
+     Terra Queimada #754437
+     Azul           #28374A
+   Tints and shades below are derived from these four. Warn is the one derived
+   hue (an amber between Areia and Terra) because three gate states need three
+   distinguishable colours.
+--------------------------------------------------------------------------- */
+
+:root {
+  --areia: #d3c7ad;
+  --verde: #6b6751;
+  --terra: #754437;
+  --azul: #28374a;
+
+  --bg: #efeade;
+  --panel: #fbf9f3;
+  --panel-2: #f3eee1;
+  --ink: #28374a;
+  --muted: #6b6751;
+  --line: #ded4bd;
+  --line-strong: #c3b596;
+
+  --pass: #6b6751;
+  --warn: #9c6b3c;
+  --fail: #754437;
+
+  --accent: #28374a;
+  --on-accent: #f3eee1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #1b242e;
+    --panel: #232f3d;
+    --panel-2: #2b3849;
+    --ink: #e9e2d0;
+    --muted: #a9a189;
+    --line: #38475a;
+    --line-strong: #4a5b70;
+
+    --pass: #9aa583;
+    --warn: #cf9a5c;
+    --fail: #c08575;
+
+    --accent: #d3c7ad;
+    --on-accent: #28374a;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #1b242e;
+  --panel: #232f3d;
+  --panel-2: #2b3849;
+  --ink: #e9e2d0;
+  --muted: #a9a189;
+  --line: #38475a;
+  --line-strong: #4a5b70;
+
+  --pass: #9aa583;
+  --warn: #cf9a5c;
+  --fail: #c08575;
+
+  --accent: #d3c7ad;
+  --on-accent: #28374a;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.panel-2 { background: var(--panel-2); }
+.muted { color: var(--muted); }
+
+input,
+select,
+textarea {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 6px 8px;
+  width: 100%;
+  font-size: 14px;
+  font-family: inherit;
+}
+input[type='checkbox'] { width: auto; accent-color: var(--verde); }
+input[type='range'] { padding: 0; accent-color: var(--verde); background: transparent; border: none; }
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--line-strong);
+  outline-offset: 1px;
+}
+
+.btn {
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.btn:hover { background: var(--panel-2); }
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.btn-primary:hover { opacity: 0.9; background: var(--accent); }
+
+/* Wide content scrolls inside itself rather than the page */
+.scroll-x { overflow-x: auto; }
