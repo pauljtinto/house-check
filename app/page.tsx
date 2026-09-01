@@ -14,17 +14,15 @@ import { evaluate } from '@/lib/evaluate';
 import { Verdict } from '@/components/Verdict';
 import { Importer } from '@/components/Importer';
 import { Field, Money, Pct, Num, Check, money } from '@/components/Field';
-import {
-  ASSUMPTIONS_RECHECK_AFTER_DAYS,
-  assumptionsNeedRefresh,
-  daysSinceVerified,
-  oldestVerifiedDate,
-} from '@/lib/assumptions';
+import { Comparables, useComps } from '@/components/Comparables';
+import { StretchPanel } from '@/components/StretchPanel';
+import { CompareView } from '@/components/CompareView';
+import { seedListings } from '@/lib/seed';
+import { CompsBrowser } from '@/components/CompsBrowser';
 
 const STORAGE_KEY = 'house-check:v1';
 
 const VERDICT_DOT = { buy: 'var(--pass)', stretch: 'var(--warn)', walk: 'var(--fail)' } as const;
-const VERDICT_LABEL = { buy: 'Pursue', stretch: 'Stretch', walk: 'Walk' } as const;
 
 function blankListing(over: Partial<Listing> = {}): Listing {
   return {
@@ -52,7 +50,10 @@ export default function Page() {
   const [profile, setProfile] = useState<BuyerProfile>(DEFAULT_PROFILE);
   const [listings, setListings] = useState<Listing[]>([blankListing()]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [view, setView] = useState<'listing' | 'profile' | 'import' | 'compare'>('listing');
+  const [view, setView] = useState<'listing' | 'profile' | 'import'>('listing');
+  const [showCompare, setShowCompare] = useState(false);
+  const [showComps, setShowComps] = useState(false);
+  const { comps, error: compsError } = useComps();
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -110,6 +111,19 @@ export default function Page() {
     setView('listing');
   }
 
+  /** Load the three listings we analysed, without wiping anything already here. */
+  function loadSeed() {
+    const seeded = seedListings();
+    setListings((ls) => {
+      const kept = ls.filter((l) => !isBlank(l));
+      const have = new Set(kept.map((l) => l.address.trim().toLowerCase()));
+      const fresh = seeded.filter((s) => !have.has(s.address.trim().toLowerCase()));
+      return [...kept, ...fresh];
+    });
+    setActiveId(null);
+    setView('listing');
+  }
+
   function removeListing(id: string) {
     setListings((ls) => {
       const next = ls.filter((l) => l.id !== id);
@@ -126,8 +140,11 @@ export default function Page() {
   }
 
   const usingPlaceholders = PLACEHOLDER_FIELDS.filter((f) => profile[f] === DEFAULT_PROFILE[f]);
-  const assumptionsAgeDays = daysSinceVerified();
-  const staleAssumptions = assumptionsNeedRefresh();
+
+  const missingSeed = useMemo(() => {
+    const have = new Set(listings.map((l) => l.address.trim().toLowerCase()));
+    return seedListings().filter((s) => !have.has(s.address.trim().toLowerCase())).length;
+  }, [listings]);
 
   if (!active) return null;
 
@@ -142,11 +159,25 @@ export default function Page() {
           <button onClick={() => setView('import')} className="btn btn-primary">
             Import listing
           </button>
-          <button onClick={() => setView(view === 'compare' ? 'listing' : 'compare')} className="btn">
-            {view === 'compare' ? 'Back' : 'Compare'}
-          </button>
           <button onClick={() => addListing()} className="btn">
             + Blank
+          </button>
+          <button
+            onClick={() => setShowCompare((v) => !v)}
+            className="btn"
+            disabled={listings.length < 2}
+            title={listings.length < 2 ? 'Add a second listing to compare' : undefined}
+            style={listings.length < 2 ? { opacity: 0.5, cursor: 'default' } : undefined}
+          >
+            {showCompare ? 'Hide compare' : `Compare (${listings.length})`}
+          </button>
+          <button
+            onClick={() => setShowComps((v) => !v)}
+            className="btn"
+            disabled={comps.length === 0}
+            style={comps.length === 0 ? { opacity: 0.5, cursor: 'default' } : undefined}
+          >
+            {showComps ? 'Hide comps' : `Comps (${comps.length})`}
           </button>
           <button onClick={() => setView(view === 'profile' ? 'listing' : 'profile')} className="btn">
             {view === 'profile' ? 'Back' : 'Your numbers'}
@@ -164,13 +195,22 @@ export default function Page() {
         </div>
       )}
 
-      {staleAssumptions && (
-        <div
-          className="rounded-lg p-3 mb-4 text-[13px] leading-snug panel"
-          style={{ borderColor: 'var(--warn)' }}
-        >
-          <strong>Verified assumptions are {assumptionsAgeDays} days old</strong> — re-check rates,
-          taxes, lending rules and bike-lane status before relying on this for an offer.
+      {showComps && comps.length > 0 && (
+        <div className="mb-5">
+          <CompsBrowser comps={comps} onClose={() => setShowComps(false)} />
+        </div>
+      )}
+
+      {showCompare && listings.length >= 2 && (
+        <div className="mb-5">
+          <CompareView
+            evaluations={listings.map((l) => evaluations.get(l.id)!)}
+            onSelect={(id) => {
+              setActiveId(id);
+              setView('listing');
+              setShowCompare(false);
+            }}
+          />
         </div>
       )}
 
@@ -221,96 +261,39 @@ export default function Page() {
               );
             })}
           </div>
-          {listings.length > 1 && (
-            <button
-              onClick={() => {
-                setListings([blankListing()]);
-                setActiveId(null);
-              }}
-              className="text-[11px] muted underline px-2 py-2"
-            >
-              Clear all
-            </button>
-          )}
+          <div className="pt-1.5 mt-1 px-2 space-y-1.5 border-t" style={{ borderColor: 'var(--line)' }}>
+            {missingSeed > 0 && (
+              <button onClick={loadSeed} className="block text-[11px] underline text-left leading-snug">
+                Load the {missingSeed} listing{missingSeed === 1 ? '' : 's'} we analysed
+                <span className="block muted no-underline">196 &amp; 46 Brunswick, 365 Shaw</span>
+              </button>
+            )}
+            {listings.length > 1 && (
+              <button
+                onClick={() => {
+                  if (confirm('Remove every listing? This cannot be undone.')) {
+                    setListings([blankListing()]);
+                    setActiveId(null);
+                  }
+                }}
+                className="block text-[11px] muted underline"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
         </aside>
 
         {/* Editor */}
-        {view === 'compare' ? (
-          <section className="lg:col-span-2 panel rounded-lg p-4">
-            <div className="flex items-baseline justify-between gap-3 mb-3">
-              <h2 className="text-sm font-semibold">Compare listings</h2>
-              <span className="muted text-[11px]">
-                Assumptions verified {oldestVerifiedDate()} · refresh after {ASSUMPTIONS_RECHECK_AFTER_DAYS} days
-              </span>
-            </div>
-            <div className="scroll-x">
-              <table className="w-full text-[12px]" style={{ minWidth: 920 }}>
-                <thead>
-                  <tr className="text-left muted border-b" style={{ borderColor: 'var(--line)' }}>
-                    <th className="py-2 pr-3 font-medium">Listing</th>
-                    <th className="py-2 pr-3 font-medium">Verdict</th>
-                    <th className="py-2 pr-3 font-medium">Ask</th>
-                    <th className="py-2 pr-3 font-medium">Landing</th>
-                    <th className="py-2 pr-3 font-medium">Cash</th>
-                    <th className="py-2 pr-3 font-medium">Carry</th>
-                    <th className="py-2 pr-3 font-medium">Bike</th>
-                    <th className="py-2 pr-3 font-medium">Suite</th>
-                    <th className="py-2 pr-3 font-medium">Main warning</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listings.map((l) => {
-                    const ev = evaluations.get(l.id)!;
-                    const firstProblem = ev.gates.find((g) => g.state !== 'pass')?.detail ?? ev.flags[0] ?? 'No major warning';
-                    return (
-                      <tr
-                        key={l.id}
-                        className="border-b cursor-pointer align-top"
-                        style={{ borderColor: 'var(--line)' }}
-                        onClick={() => {
-                          setActiveId(l.id);
-                          setView('listing');
-                        }}
-                      >
-                        <td className="py-2 pr-3">
-                          <div className="font-medium">{l.address || 'Untitled'}</div>
-                          <div className="muted">{l.type}</div>
-                        </td>
-                        <td className="py-2 pr-3">
-                          <span className="inline-flex items-center gap-1.5">
-                            <span
-                              className="w-2 h-2 rounded-full"
-                              style={{ background: VERDICT_DOT[ev.verdict] }}
-                            />
-                            {VERDICT_LABEL[ev.verdict]}
-                          </span>
-                        </td>
-                        <td className="py-2 pr-3 tabular-nums">{money(l.listPrice)}</td>
-                        <td className="py-2 pr-3 tabular-nums font-medium">{money(ev.modelledPrice)}</td>
-                        <td className="py-2 pr-3 tabular-nums">{money(ev.cash.total)}</td>
-                        <td className="py-2 pr-3 tabular-nums">{money(ev.carryEmpty.effectiveMonthly)}/mo</td>
-                        <td className="py-2 pr-3 tabular-nums">
-                          {ev.bike.assessed ? `${ev.bike.resilientScore}/100` : 'Missing'}
-                        </td>
-                        <td className="py-2 pr-3">{suiteLabel(l.suite)}</td>
-                        <td className="py-2 pr-3 leading-snug">{firstProblem}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        ) : (
-          <section>
-            {view === 'import' ? (
+        <section>
+          {view === 'import' ? (
             <Importer
               onImport={(partial) => {
                 addListing(partial);
               }}
               onCancel={() => setView('listing')}
             />
-            ) : view === 'profile' ? (
+          ) : view === 'profile' ? (
             <div className="panel rounded-lg p-4 space-y-3">
               <h2 className="text-sm font-semibold">Your numbers</h2>
               <Field label="Budget ceiling" hint="Pre-approval purchase price">
@@ -368,7 +351,7 @@ export default function Page() {
                 ))}
               </div>
             </div>
-            ) : (
+          ) : (
             <div className="panel rounded-lg p-4 space-y-3">
               <h2 className="text-sm font-semibold">Listing</h2>
               <Field label="Address">
@@ -408,6 +391,22 @@ export default function Page() {
               <Field label="Sold price" hint="Only for comps — scores the model's prediction">
                 <Num value={active.soldPrice} onChange={(v) => update({ soldPrice: v })} step={1000} />
               </Field>
+
+              <div className="pt-2 border-t" style={{ borderColor: 'var(--line)' }}>
+                <div className="text-[13px] font-medium mb-2">Listing history</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Original ask" hint="Earliest price across all attempts">
+                    <Num value={active.originalListPrice} onChange={(v) => update({ originalListPrice: v })} step={1000} />
+                  </Field>
+                  <Field label="Prior terminations">
+                    <Num value={active.priorTerminations} onChange={(v) => update({ priorTerminations: v })} />
+                  </Field>
+                </div>
+                <p className="muted text-[11px] mt-1 leading-snug">
+                  A terminate-and-relist resets days-on-market and lowers the ask. Any &ldquo;sold over
+                  ask&rdquo; measured against the relist overstates demand.
+                </p>
+              </div>
 
               <div className="pt-2 border-t" style={{ borderColor: 'var(--line)' }}>
                 <div className="text-[13px] font-medium mb-2">Bikeability</div>
@@ -468,11 +467,24 @@ export default function Page() {
                 <input value={active.dealBreaker ?? ''} onChange={(e) => update({ dealBreaker: e.target.value || undefined })} />
               </Field>
             </div>
-            )}
-          </section>
-        )}
+          )}
+        </section>
 
-        {view !== 'compare' && <section>{evaluation && <Verdict ev={evaluation} />}</section>}
+        <section className="space-y-4">
+          {evaluation && <Verdict ev={evaluation} />}
+          {evaluation && (
+            <StretchPanel listing={active} profile={profile} predicted={evaluation.modelledPrice} />
+          )}
+          {evaluation && comps.length > 0 && (
+            <Comparables comps={comps} type={active.type} price={evaluation.modelledPrice} />
+          )}
+          {compsError && (
+            <div className="panel rounded-lg p-3 text-[12px] muted">
+              Could not load the comp set ({compsError}). Check that
+              <code> public/data/comps-university-c01.csv</code> is present.
+            </div>
+          )}
+        </section>
       </div>
 
       <footer className="muted text-[11px] mt-8 leading-relaxed max-w-3xl">
@@ -482,17 +494,4 @@ export default function Page() {
       </footer>
     </main>
   );
-}
-
-function suiteLabel(suite: SuiteStatus): string {
-  switch (suite) {
-    case 'existing-legal':
-      return 'Legal';
-    case 'existing-unverified':
-      return 'Unverified';
-    case 'addable':
-      return 'Addable';
-    default:
-      return 'None';
-  }
 }

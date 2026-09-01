@@ -17,6 +17,10 @@ export interface Listing {
   /** Set only for sold comps — lets the app score its own prediction. */
   soldPrice?: number;
   daysOnMarket?: number;
+  /** Earliest ask across all listing attempts — relists often drop the price. */
+  originalListPrice?: number;
+  /** How many times the listing was terminated and relisted. */
+  priorTerminations?: number;
   type: PropertyType;
   /** Offers held to a set date. Overrides the list-price band — a declared
    *  offer night IS the hold-back signal the band only proxies for. */

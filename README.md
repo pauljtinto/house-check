@@ -27,9 +27,10 @@ lib/landTransferTax.ts   Ontario + Toronto MLTT (incl. the April 2026 changes)
 lib/mortgage.ts          down payment tiers, stress test, semi-annual compounding
 lib/listPriceStrategy.ts the offer-night classifier, calibrated on 23 comps
 lib/bikeability.ts       the hard gate, with Bill 212 resilience scoring
+lib/comps.ts             comp set loader + fair-value bands by property type
 lib/evaluate.ts          pulls it together into a verdict
 app/page.tsx             the UI
-data/                    the comp set
+public/data/             the comp set (fetched by the app, read by the tests)
 ```
 
 Listings and your profile are saved in browser localStorage. Nothing leaves your machine.
