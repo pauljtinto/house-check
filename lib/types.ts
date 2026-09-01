@@ -10,6 +10,14 @@ export type HeritageStatus = 'none' | 'unknown' | 'listed' | 'designated';
 
 export type SuiteStatus = 'none' | 'existing-unverified' | 'existing-legal' | 'addable';
 
+export interface ListingHistoryEntry {
+  start: string;
+  end: string;
+  price: number;
+  event: string;
+  mlsId?: string;
+}
+
 export interface Listing {
   id: string;
   address: string;
@@ -21,6 +29,10 @@ export interface Listing {
   originalListPrice?: number;
   /** How many times the listing was terminated and relisted. */
   priorTerminations?: number;
+  /** Total days on market across all listing attempts — not just the current relist. */
+  propertyDaysOnMarket?: number;
+  /** Chronological record of each listing attempt. */
+  listingHistory?: ListingHistoryEntry[];
   type: PropertyType;
   /** Offers held to a set date. Overrides the list-price band — a declared
    *  offer night IS the hold-back signal the band only proxies for. */
