@@ -1,7 +1,7 @@
 import type { Listing } from './types';
 
 /**
- * The three listings we actually analysed, as data.
+ * The listings we actually analysed, as data.
  *
  * Listings live in browser localStorage, which is per-origin and per-browser —
  * nothing carries over between machines, and localhost:3000 and localhost:3001
@@ -108,6 +108,43 @@ export function seedListings(): Listing[] {
       notes:
         'Trinity Bellwoods. Clean hold-back: listed $1,349,000 with an Aug 26 offer date, sold ' +
         '$1,435,000 (+6.4%). One of the two comps calibrating the hold-back band.',
+    },
+    {
+      id: crypto.randomUUID(),
+      address: '464 Montrose Ave',
+      listPrice: 1_499_000,
+      daysOnMarket: 5,
+      type: 'Detached',
+      // No hold-back declared. Open houses Sat & Sun, no offer date — which is
+      // why a conditional offer is possible here and was not at 196 Brunswick.
+      beds: 3,
+      baths: 3,
+      lotFrontageFt: 21,
+      lotDepthFt: 120,
+      annualPropertyTax: 7_274,
+      // metresToProtectedLane deliberately unset: the open question is whether the
+      // honest daily route is Bloor (a Bill 212 removal corridor) or Harbord, and
+      // that is resolved by riding it, not by guessing from the address.
+      onResilientCorridor: false,
+      secureBikeStorage: true, // detached double garage off the lane
+      northOfDavenport: false,
+      heritage: 'unknown',
+      kitchens: 2,
+      suite: 'existing-unverified',
+      abutsLaneway: true,
+      scores: { Paul: { ...NEUTRAL }, Armando: { ...NEUTRAL } },
+      notes:
+        'Palmerston-Little Italy. Priced to market, not staged for an auction: no offer date, no ' +
+        'relist, SigmaEstimate $1,486,000 (99.1% of ask). Pre-listing inspection discloses ' +
+        'knob-and-tube on the 2nd floor — the report\'s only P-rated item, "$10,000+", realistically ' +
+        '$15,000-25,000 with plaster repair, and many insurers decline it, which the lender needs. ' +
+        'Also: 100A service already carrying two stoves and a dryer, flat roof ~15 years, sagging ' +
+        'garage roof re-supported, no A/C, clay drains of unknown condition (scope them, ~$400). ' +
+        'The "up to 1,377 sqft" laneway figure is the geometric maximum for a 21 ft lot, not a ' +
+        'permitted size — a laneway suite must be smaller than the main house GFA. Must-do repairs ' +
+        '$15,700-26,400 put the effective price at $1,515,000-$1,525,000, over the ceiling. ' +
+        'Defensible offer $1,450,000-$1,475,000. Rental history $3,300 (2017), $1,400 (2022) — ' +
+        'suite rent left blank rather than guessed. See listings/464-montrose-ave.md',
     },
   ];
 }

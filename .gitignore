@@ -2,3 +2,7 @@ node_modules/
 .next/
 dist/
 .vercel
+.env*
+
+# stale file kept for reference; not part of the app
+_to_delete/

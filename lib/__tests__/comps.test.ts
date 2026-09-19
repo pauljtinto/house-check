@@ -150,6 +150,7 @@ describe('seed listings', () => {
       '196 Brunswick Ave',
       '46 Brunswick Ave',
       '365 Shaw St',
+      '464 Montrose Ave',
     ]);
 
     const b196 = seeds[0];
@@ -165,6 +166,18 @@ describe('seed listings', () => {
 
     const shaw = seeds[2];
     expect(shaw.soldPrice).toBe(1_435_000);
+
+    const montrose = seeds[3];
+    expect(montrose.listPrice).toBe(1_499_000);
+    expect(montrose.type).toBe('Detached');
+    expect(montrose.annualPropertyTax).toBe(7_274);
+    expect(montrose.kitchens).toBe(2);
+    // No hold-back was declared, so the offer-night band must not be applied.
+    expect(montrose.holdbackOffers).toBeUndefined();
+    // Bikeability is the one open gate: left unmeasured so the app warns rather
+    // than scoring a distance nobody has ridden.
+    expect(montrose.metresToProtectedLane).toBeUndefined();
+    expect(montrose.estimatedSuiteRentMonthly).toBeUndefined();
   });
 
   it('gives every seed a distinct id', async () => {

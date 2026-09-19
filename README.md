@@ -41,6 +41,28 @@ Listings and your profile are saved in browser localStorage. Nothing leaves your
 - `COMPS-ANALYSIS.md` — the 23-comp analysis the predictions rest on
 - `PHASE-0-FINDINGS.md` — verified rules, and four things that changed the plan
 
+## Hosting and access
+
+Deployed on Vercel from `github.com/pauljtinto/house-check`. The loop is: commit locally, push to
+`main`, Vercel builds and deploys. Nothing else syncs — see below.
+
+**Listings do not travel.** They live in browser `localStorage`, which is per-origin and per-browser.
+`localhost:3000`, `localhost:3001` and the Vercel URL are three separate stores, and nothing reaches
+Armando's laptop. Use the "Load the 3 listings we analysed" button in the rail to seed any browser.
+
+**Indexing is handled; access is not.** `X-Robots-Tag: noindex` is set on every response in
+`next.config.ts`, plus a blanket `Disallow` in `app/robots.ts`. Vercel adds noindex to preview
+deployments automatically but *not* to current production, and this app serves MLS sold data at
+`/data/comps-university-c01.csv`. That keeps it out of search results — it does **not** stop anyone
+with the URL from reading it.
+
+**To actually restrict access**, on the Hobby plan Vercel Authentication only offers Standard
+Protection, which explicitly leaves the production domain public. The real options are: Pro at
+$20/month with the scope set to All Deployments (a second person can be a free Viewer seat); or stay
+on a non-production branch with Standard Protection and use the branch URL; or hand-roll a password
+gate. Note that Next.js 16 renamed `middleware.ts` to `proxy.ts` — a stale `middleware.ts` silently
+stops running, which would remove an auth gate without any build error.
+
 ## Caveats
 
 Not mortgage, tax or legal advice. Rates verified 2026-08-31; re-check anything older than a few

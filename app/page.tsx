@@ -111,7 +111,7 @@ export default function Page() {
     setView('listing');
   }
 
-  /** Load the three listings we analysed, without wiping anything already here. */
+  /** Load the listings we analysed, without wiping anything already here. */
   function loadSeed() {
     const seeded = seedListings();
     setListings((ls) => {
@@ -265,7 +265,7 @@ export default function Page() {
             {missingSeed > 0 && (
               <button onClick={loadSeed} className="block text-[11px] underline text-left leading-snug">
                 Load the {missingSeed} listing{missingSeed === 1 ? '' : 's'} we analysed
-                <span className="block muted no-underline">196 &amp; 46 Brunswick, 365 Shaw</span>
+                <span className="block muted no-underline">196 &amp; 46 Brunswick, 365 Shaw, 464 Montrose</span>
               </button>
             )}
             {listings.length > 1 && (
